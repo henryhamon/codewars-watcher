@@ -1,10 +1,6 @@
 package main
 
-import (
-	"encoding/json"
-	"log"
-	"net/http"
-)
+import "fmt"
 
 // USERNAME - user to monitor
 const USERNAME string = "henryhamon"
@@ -12,9 +8,16 @@ const USERNAME string = "henryhamon"
 // SERVICE - service url for monitor a friend
 const SERVICE string = "https://www.codewars.com/api/v1/users/"
 
-func main() {
+var username string
+var friends []string
 
-	var user User
+func main() {
+	rs, err := CompareState("henryhamon")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(rs)
+	/*var user User
 
 	resp, err := http.Get(SERVICE + USERNAME)
 	if err != nil {
@@ -28,5 +31,5 @@ func main() {
 
 	if err := SaveState(user); err != nil {
 		log.Fatal(err)
-	}
+	}*/
 }
