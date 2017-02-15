@@ -1,46 +1,59 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
+	"time"
 
 	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
-// UserCollection - collection name for saving users
-const UserCollection string = "users"
+// Monitor - monitor of friends.
+type Monitor struct {
+	usernames []string
+	session   *mgo.Session
+	time      time.Timer
+}
 
-// DataBase - database name
-const DataBase string = "codewars"
+// NewMonitor - monitor constructor
+func NewMonitor(s *mgo.Session, unames []string) *Monitor {
+	return &Monitor{session: s, usernames: unames}
+}
 
-// SaveState - saves a state of a user into database
-func SaveState(u User) error {
-	session, err := mgo.Dial("")
-	if err != nil {
-		return errors.New("error getting a database session")
-	}
-	defer session.Close()
+func (m *Monitor) dataStore() *DataStore {
+	return &DataStore{m.session.Copy()}
+}
 
-	users := session.DB("codewars").C(UserCollection)
-	if err := users.Insert(&u); err != nil {
-		return errors.New("error inserting user into database")
+// UserState - store a user and when he was in that state
+type UserState struct {
+	user User
+	date time.Time
+}
+
+// UpdateUsers - update user state.
+func (m *Monitor) UpdateUsers() error {
+	for _, username := range m.usernames {
+		user, err := m.getUser(username)
+		if err != nil {
+			return err
+		}
+		userstate := UserState{user, time.Now()}
+		m.dataStore().SaveUserState(userstate)
 	}
 	return nil
 }
 
-// CompareState - compare with last state.
-func CompareState(username string) ([]User, error) {
-	var result []User
-	session, err := mgo.Dial("")
+func (m *Monitor) getUser(username string) (User, error) {
+	var user User
+	resp, err := http.Get(SERVICE + username)
 	if err != nil {
-		return nil, errors.New("")
+		return user, errors.New("error getting a user")
 	}
-	defer session.Close()
+	defer resp.Body.Close()
 
-	users := session.DB("codewars").C(UserCollection)
-	err = users.
-		Find(bson.M{"username": username}).
-		Sort("-$natural").
-		Limit(2).All(&result)
-	return result, err
+	if err = json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return user, errors.New("error decoding a user")
+	}
+	return user, err
 }

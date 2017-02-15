@@ -1,6 +1,6 @@
 package main
 
-import "fmt"
+import mgo "gopkg.in/mgo.v2"
 
 // USERNAME - user to monitor
 const USERNAME string = "henryhamon"
@@ -8,28 +8,26 @@ const USERNAME string = "henryhamon"
 // SERVICE - service url for monitor a friend
 const SERVICE string = "https://www.codewars.com/api/v1/users/"
 
-var username string
-var friends []string
+var (
+	username string
+	friends  []string
+	user     User
+)
 
 func main() {
-	rs, err := CompareState("henryhamon")
+
+	usernames := make([]string, 5)
+	usernames = append(usernames, username)
+
+	session, err := mgo.Dial("")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(rs)
-	/*var user User
+	defer session.Close()
 
-	resp, err := http.Get(SERVICE + USERNAME)
+	monitor := NewMonitor(session, usernames)
+	err = monitor.UpdateUsers()
 	if err != nil {
-		log.Fatal("Get service ", err)
+		panic(err)
 	}
-	defer resp.Body.Close()
-
-	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		log.Fatal("Decoder ", err)
-	}
-
-	if err := SaveState(user); err != nil {
-		log.Fatal(err)
-	}*/
 }
