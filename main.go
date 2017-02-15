@@ -1,7 +1,5 @@
 package main
 
-import mgo "gopkg.in/mgo.v2"
-
 // USERNAME - user to monitor
 const USERNAME string = "henryhamon"
 
@@ -15,18 +13,15 @@ var (
 )
 
 func main() {
-
-	usernames := make([]string, 5)
-	usernames = append(usernames, username)
-
-	session, err := mgo.Dial("")
-	if err != nil {
-		panic(err)
-	}
-	defer session.Close()
-
-	monitor := NewMonitor(session, usernames)
-	err = monitor.UpdateUsers()
+	/*
+		session, err := mgo.Dial("")
+		if err != nil {
+			panic(err)
+		}
+		defer session.Close()
+	*/
+	ln := LinuxNotificator{}
+	err := ln.notify("testano")
 	if err != nil {
 		panic(err)
 	}

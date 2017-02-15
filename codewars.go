@@ -1,5 +1,26 @@
 package main
 
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+)
+
+// GetUser - retriece a user from codewars
+func GetUser(username string) (User, error) {
+	var user User
+	resp, err := http.Get(SERVICE + username)
+	if err != nil {
+		return user, errors.New("error getting a user")
+	}
+	defer resp.Body.Close()
+
+	if err = json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return user, errors.New("error decoding a user ")
+	}
+	return user, err
+}
+
 // User - user information.
 type User struct {
 	Username            string         `json:"username"`

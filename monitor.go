@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
-	"net/http"
 	"time"
 
 	mgo "gopkg.in/mgo.v2"
@@ -21,39 +18,26 @@ func NewMonitor(s *mgo.Session, unames []string) *Monitor {
 	return &Monitor{session: s, usernames: unames}
 }
 
-func (m *Monitor) dataStore() *DataStore {
-	return &DataStore{m.session.Copy()}
+func (m *Monitor) datastore() *UserStateDB {
+	return &UserStateDB{m.session.Copy()}
 }
 
 // UserState - store a user and when he was in that state
 type UserState struct {
-	user User
-	date time.Time
+	User User
+	Date time.Time
 }
 
 // UpdateUsers - update user state.
 func (m *Monitor) UpdateUsers() error {
-	for _, username := range m.usernames {
-		user, err := m.getUser(username)
-		if err != nil {
-			return err
-		}
-		userstate := UserState{user, time.Now()}
-		m.dataStore().SaveUserState(userstate)
-	}
-	return nil
-}
-
-func (m *Monitor) getUser(username string) (User, error) {
-	var user User
-	resp, err := http.Get(SERVICE + username)
+	//for _, username := range m.usernames {
+	username := "henryhamon"
+	user, err := GetUser(username)
 	if err != nil {
-		return user, errors.New("error getting a user")
+		return err
 	}
-	defer resp.Body.Close()
-
-	if err = json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		return user, errors.New("error decoding a user")
-	}
-	return user, err
+	userstate := UserState{User: user, Date: time.Now()}
+	m.datastore().SaveUserState(userstate)
+	//}
+	return nil
 }

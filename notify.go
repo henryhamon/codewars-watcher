@@ -1,14 +1,16 @@
 package main
 
-import (
-	"github.com/0xAX/notificator"
-)
+import "os/exec"
 
-func notify(message string) {
-	var notify *notificator.Notificator
-	notify = notificator.New(notificator.Options{
-		DefaultIcon: "",
-		AppName:     "Codewars",
-	})
-	notify.Push("title", message, "", notificator.UR_NORMAL)
+// Notifier - interface for OS to notify user
+type Notifier interface {
+	notify(message string)
+}
+
+// LinuxNotificator - linux treatment for notify users
+type LinuxNotificator struct {
+}
+
+func (ln *LinuxNotificator) notify(message string) error {
+	return exec.Command("notify-send", "codewars", message).Run()
 }
