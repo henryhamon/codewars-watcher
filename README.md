@@ -9,3 +9,8 @@ Feel free to contribute.
 ## Requirements
 * GO 1.6+
 * MongoDB
+
+
+### Todo
+
+* Treat the database session using a global session;
