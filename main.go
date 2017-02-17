@@ -1,15 +1,9 @@
 package main
 
-// USERNAME - user to monitor
-const USERNAME string = "henryhamon"
+import (
+	"fmt"
 
-// SERVICE - service url for monitor a friend
-const SERVICE string = "https://www.codewars.com/api/v1/users/"
-
-var (
-	username string
-	friends  []string
-	user     User
+	"github.com/leometzger/codewars-monitor/codewars"
 )
 
 func main() {
@@ -20,9 +14,7 @@ func main() {
 		}
 		defer session.Close()
 	*/
-	ln := LinuxNotificator{}
-	err := ln.notify("testano")
-	if err != nil {
-		panic(err)
-	}
+	fmt.Println("listening on port 8989")
+	codewars.Run()
+	fmt.Println("closing api.")
 }
