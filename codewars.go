@@ -6,19 +6,37 @@ import (
 	"net/http"
 )
 
+const serviceName string = "https://www.codewars.com/api/v1/users/"
+
+// CodewarsAPI server and services provided by codewars api
+type CodewarsAPI struct {
+	server   string
+	services map[string]string
+}
+
+// NewCodewarsAPI return an instance to access codewars api
+func NewCodewarsAPI() *CodewarsAPI {
+	return &CodewarsAPI{
+		server: "https://www.codewars.com/api/v1",
+		services: map[string]string{
+			"getuser": "/users/",
+		},
+	}
+}
+
 // GetUser - retriece a user from codewars
-func GetUser(username string) (User, error) {
+func (c *CodewarsAPI) GetUser(username string) (*User, error) {
 	var user User
-	resp, err := http.Get(SERVICE + username)
+	resp, err := http.Get(serviceName + username)
 	if err != nil {
-		return user, errors.New("error getting a user")
+		return &user, errors.New("error getting a user")
 	}
 	defer resp.Body.Close()
 
 	if err = json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		return user, errors.New("error decoding a user ")
+		return &user, errors.New("error decoding a user ")
 	}
-	return user, err
+	return &user, err
 }
 
 // User - user information.
