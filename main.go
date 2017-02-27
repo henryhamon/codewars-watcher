@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
+	"sync"
 	"time"
 
 	mgo "gopkg.in/mgo.v2"
 )
 
 var watcher *Watcher
+var wg sync.WaitGroup
 
 func main() {
+	wg.Add(1)
 	watcher = GetWatcher()
 	interrupt := make(chan bool)
 	session, err := mgo.Dial("")
@@ -20,20 +22,15 @@ func main() {
 	}
 	defer session.Close()
 
-	usernames := []string{"leometzger", "henryhamon"}
+	usernames := []string{"leometzger", "henryhamon", "ALNeneve"}
 
 	watcher.datastore = GetDataStore(session)
-	watcher.time = time.NewTicker(10 * time.Second)
+	watcher.time = time.NewTicker(3600 * time.Second)
 	watcher.usernames = usernames
 	go watcher.Run(interrupt)
 
-	fmt.Println("listening on the port 9090 localhost")
-	var server api
-	err = http.ListenAndServe(":9090", server.router)
-	if err != nil {
-		interrupt <- true
-		log.Fatal(err)
-	}
+	fmt.Println("watching your friends and updating hourly")
+	wg.Wait()
 }
 
 // GetDataStore gives the datastore correct

@@ -61,7 +61,6 @@ func getapi() *api {
 	var a api
 	a.router = mux.NewRouter().StrictSlash(true)
 	a.router.HandleFunc("/", a.index)
-	a.router.HandleFunc("/add", a.addUser)
 	a.router.HandleFunc("/update", a.updateState)
 	a.watcher = GetWatcher()
 	return &a
