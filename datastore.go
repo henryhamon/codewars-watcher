@@ -35,14 +35,14 @@ func (ds *MongoStore) userstateCol() *mgo.Collection {
 }
 
 // Save - saves a user state into database
-func (ds *MongoStore) Save(us UserState) error {
+func (ds MongoStore) Save(us UserState) error {
 	return ds.userstateCol().Insert(&us)
 }
 
 // RegistersByLimit - return last n states of user.
-func (ds *MongoStore) RegistersByLimit(username string, n int) ([]UserState, error) {
+func (ds MongoStore) RegistersByLimit(username string, n int) ([]UserState, error) {
 	var uss []UserState
-	err := ds.userstateCol().Find(bson.M{"username": username}).Sort("-$natural").Limit(n).All(&uss)
+	err := ds.userstateCol().Find(bson.M{"user.username": username}).Sort("-$natural").Limit(n).All(&uss)
 
 	if err != nil {
 		return nil, errors.New("error finding users by username")
@@ -51,9 +51,9 @@ func (ds *MongoStore) RegistersByLimit(username string, n int) ([]UserState, err
 }
 
 // RegistersByDate - get last dates user states
-func (ds *MongoStore) RegistersByDate(username string, t time.Time) ([]UserState, error) {
+func (ds MongoStore) RegistersByDate(username string, t time.Time) ([]UserState, error) {
 	var uss []UserState
-	err := ds.userstateCol().Find(bson.M{"username": username, "date": t}).Sort("-$natural").All(&uss)
+	err := ds.userstateCol().Find(bson.M{"user.username": username, "date": bson.M{"$gt": t}}).Sort("-$natural").All(&uss)
 
 	if err != nil {
 		return nil, errors.New("error finding users by date")
@@ -90,6 +90,7 @@ func (ds *FileStore) Save(us UserState) error {
 	if err != nil {
 		return err
 	}
+	ds.states = append(ds.states, us)
 	err = saveFile(completePath, data)
 	return err
 }

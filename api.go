@@ -11,21 +11,29 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
+// API is a api to response with history of watcher users
+type api struct {
+	watcher *Watcher
+	router  *mux.Router
+}
+
+func (a *api) index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome to codewars monitor api.")
 }
 
 // updateState - update state of all users
-func updateState(w http.ResponseWriter, r *http.Request) {
+func (a *api) updateState(w http.ResponseWriter, r *http.Request) {
 	watcher := GetWatcher()
 	go watcher.UpdateUsers()
 	w.WriteHeader(http.StatusNoContent)
 }
 
 // addUser - add a user to be monitored
-// NOT RETURNING.
-func addUser(w http.ResponseWriter, r *http.Request) {
-	watcher := GetWatcher()
+func (a *api) addUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 	user := make(map[string]string)
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -36,11 +44,11 @@ func addUser(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if err = watcher.AddUser(user["username"]); err != nil {
+	if err = a.watcher.AddUser(user["username"]); err != nil {
 		log.Fatal(err)
 	}
 	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(watcher); err != nil {
+	if err = json.NewEncoder(w).Encode(a.watcher); err != nil {
 		panic(err)
 	}
 	if err != nil {
@@ -49,11 +57,12 @@ func addUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // Run - run api listener
-func Run() {
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", index)
-	router.HandleFunc("/add", addUser)
-	router.HandleFunc("/update", updateState)
-
-	log.Fatal(http.ListenAndServe(":8989", router))
+func getapi() *api {
+	var a api
+	a.router = mux.NewRouter().StrictSlash(true)
+	a.router.HandleFunc("/", a.index)
+	a.router.HandleFunc("/add", a.addUser)
+	a.router.HandleFunc("/update", a.updateState)
+	a.watcher = GetWatcher()
+	return &a
 }

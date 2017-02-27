@@ -17,7 +17,7 @@ type UserState struct {
 type Watcher struct {
 	usernames []string
 	datastore DataStore
-	time      time.Timer
+	time      *time.Ticker
 	client    CodewarsAPI
 }
 
@@ -27,6 +27,18 @@ func GetWatcher() *Watcher {
 		w = &Watcher{}
 	}
 	return w
+}
+
+// Run keep ticking and updating users
+func (w *Watcher) Run(interrupt chan bool) {
+	for {
+		select {
+		case <-w.time.C:
+			w.UpdateUsers()
+		case <-interrupt:
+			return
+		}
+	}
 }
 
 // AddUser - add a user to be Watchered
@@ -46,7 +58,10 @@ func (w *Watcher) UpdateUsers() error {
 			return err
 		}
 		userstate := UserState{time.Now(), *user}
-		w.datastore.Save(userstate)
+		err = w.datastore.Save(userstate)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
