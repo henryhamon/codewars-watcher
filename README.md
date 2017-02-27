@@ -2,15 +2,12 @@
 
 This little project was made for fun, just for training some go code and entertain myself.
 
-The idea is monitor your friends in codewars to know how they doing.
-
-Feel free to contribute.
+The idea is monitor your friends in codewars to know how they doing. Make a history.
 
 ## Requirements
-* GO 1.6+
-* MongoDB
+* GO [install](https://golang.org/doc/install)
+* MongoDB [install](https://docs.mongodb.com/manual/administration/install-community/)
 
-
-### Todo
-
-* Treat the database session using a global session;
+## Todo
+* Finish file store, to make optional mongodb
+* make and treat a config file
