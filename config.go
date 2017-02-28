@@ -1,12 +1,12 @@
 package main
 
-type config struct {
-	Database bool `json:"database"`
-
-	Loaded bool
+type configFile struct {
+	Datastore   string `json:"datastore"`
+	Ticker      int    `json:"ticker"`
+	DatabaseURL string `json:"databaseurl"`
+	API         bool   `json:"api"`
 }
 
-// GetConfig method to get the config
-func getConfig() {
-
+func defaultConfigFile() configFile {
+	return configFile{Datastore: "Mongo", Ticker: 12}
 }

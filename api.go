@@ -11,25 +11,23 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// API is a api to response with history of watcher users
-type api struct {
-	watcher *Watcher
-	router  *mux.Router
-}
-
-func (a *api) index(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome to codewars monitor api.")
 }
 
 // updateState - update state of all users
-func (a *api) updateState(w http.ResponseWriter, r *http.Request) {
-	watcher := GetWatcher()
+func updateState(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 	go watcher.UpdateUsers()
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
 }
 
 // addUser - add a user to be monitored
-func (a *api) addUser(w http.ResponseWriter, r *http.Request) {
+func addUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -41,14 +39,14 @@ func (a *api) addUser(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = json.Unmarshal(body, &user); err != nil {
 		w.WriteHeader(422)
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if err = a.watcher.AddUser(user["username"]); err != nil {
+	if err = watcher.AddUser(user["username"]); err != nil {
 		log.Fatal(err)
 	}
 	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(a.watcher); err != nil {
+	if err = json.NewEncoder(w).Encode(watcher.Usernames); err != nil {
 		panic(err)
 	}
 	if err != nil {
@@ -56,12 +54,11 @@ func (a *api) addUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Run - run api listener
-func getapi() *api {
-	var a api
-	a.router = mux.NewRouter().StrictSlash(true)
-	a.router.HandleFunc("/", a.index)
-	a.router.HandleFunc("/update", a.updateState)
-	a.watcher = GetWatcher()
-	return &a
+// RunAPI run api listener
+func RunAPI(watcher Watcher) error {
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/", index)
+	router.HandleFunc("/update", updateState)
+	router.HandleFunc("/add", addUser)
+	return http.ListenAndServe(":9090", router)
 }

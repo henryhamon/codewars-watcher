@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"sync"
 	"time"
@@ -9,31 +11,74 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-var watcher *Watcher
-var wg sync.WaitGroup
+const configfile = "config_file.json"
+
+//  Package variables
+var config configFile
+var watcher Watcher
+var session *mgo.Session
+
+func init() {
+
+	config = defaultConfigFile()
+
+	if !exists(configfile) {
+		return
+	}
+
+	data, err := ioutil.ReadFile(configfile)
+	fmt.Println(string(data))
+	if err != nil {
+		return
+	}
+
+	if err = json.Unmarshal(data, &config); err != nil {
+		log.Println("error unmarshaling config file", err)
+	}
+}
 
 func main() {
+
+	var wg sync.WaitGroup
 	wg.Add(1)
-	watcher = GetWatcher()
-	interrupt := make(chan bool)
-	session, err := mgo.Dial("")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer session.Close()
+
+	dtstore := GetDataStore(session)
+	timer := time.NewTicker(time.Duration(config.Ticker) * time.Hour)
 
 	usernames := []string{"leometzger", "henryhamon", "ALNeneve"}
 
-	watcher.datastore = GetDataStore(session)
-	watcher.time = time.NewTicker(3600 * time.Second)
-	watcher.usernames = usernames
-	go watcher.Run(interrupt)
+	watcher = Watcher{
+		Datastore: dtstore,
+		client:    CodewarsAPI{},
+		Time:      timer,
+		Usernames: usernames,
+	}
+	stop := make(chan bool)
+	go watcher.Run(stop)
 
-	fmt.Println("watching your friends and updating hourly")
+	fmt.Printf("watching your friends and updating each %d hours\n", config.Ticker)
+
+	if config.API {
+		fmt.Println("Running api on port 9090")
+		err := RunAPI(watcher)
+		if err != nil {
+			log.Fatal(err)
+			stop <- true
+		}
+	}
 	wg.Wait()
 }
 
-// GetDataStore gives the datastore correct
+// GetDataStore gives the datastore configured
 func GetDataStore(session *mgo.Session) DataStore {
-	return MongoStore{session}
+
+	if config.Datastore == "Mongo" {
+		session, err := mgo.Dial(config.DatabaseURL)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+		return MongoStore{session.Copy()}
+	}
+	return FileStore{}
 }

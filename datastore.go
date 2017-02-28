@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"time"
 
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -20,7 +19,6 @@ const DataBase string = "codewars"
 // DataStore interface to store data saved from api
 type DataStore interface {
 	Save(us UserState) error
-	RegistersByDate(username string, time time.Time) ([]UserState, error)
 	RegistersByLimit(username string, limit int) ([]UserState, error)
 }
 
@@ -50,17 +48,6 @@ func (ds MongoStore) RegistersByLimit(username string, n int) ([]UserState, erro
 	return uss, err
 }
 
-// RegistersByDate - get last dates user states
-func (ds MongoStore) RegistersByDate(username string, t time.Time) ([]UserState, error) {
-	var uss []UserState
-	err := ds.userstateCol().Find(bson.M{"user.username": username, "date": bson.M{"$gt": t}}).Sort("-$natural").All(&uss)
-
-	if err != nil {
-		return nil, errors.New("error finding users by date")
-	}
-	return uss, err
-}
-
 // FileStore an struct to save states into a file
 type FileStore struct {
 	path   string
@@ -84,7 +71,7 @@ func NewFileStore() *FileStore {
 }
 
 // Save implementation to save into a file
-func (ds *FileStore) Save(us UserState) error {
+func (ds FileStore) Save(us UserState) error {
 	completePath := ds.path + "/" + us.User.Username + ".txt"
 	data, err := json.Marshal(us)
 	if err != nil {
@@ -95,13 +82,8 @@ func (ds *FileStore) Save(us UserState) error {
 	return err
 }
 
-// RegistersByDate retrieves last n register registered from time t
-func (ds *FileStore) RegistersByDate(username string, t time.Time) ([]UserState, error) {
-	return nil, nil
-}
-
 // RegistersByLimit retrieves las n registers n
-func (ds *FileStore) RegistersByLimit(username string, limit int) ([]UserState, error) {
+func (ds FileStore) RegistersByLimit(username string, limit int) ([]UserState, error) {
 	return nil, nil
 }
 

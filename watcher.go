@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-var w *Watcher
-
 // UserState state of user when saved
 type UserState struct {
 	Time time.Time
@@ -15,27 +13,19 @@ type UserState struct {
 
 // Watcher - Watcher of friends.
 type Watcher struct {
-	usernames []string
-	datastore DataStore
-	time      *time.Ticker
+	Usernames []string     `json:"usernames"`
+	Datastore DataStore    `json:"mongo"`
+	Time      *time.Ticker `json:"ticker"`
 	client    CodewarsAPI
 }
 
-// GetWatcher - Watcher constructor
-func GetWatcher() *Watcher {
-	if w == nil {
-		w = &Watcher{}
-	}
-	return w
-}
-
 // Run keep ticking and updating users
-func (w *Watcher) Run(interrupt chan bool) {
+func (w *Watcher) Run(stop chan bool) {
 	for {
 		select {
-		case <-w.time.C:
+		case <-w.Time.C:
 			w.UpdateUsers()
-		case <-interrupt:
+		case <-stop:
 			return
 		}
 	}
@@ -46,19 +36,30 @@ func (w *Watcher) AddUser(username string) error {
 	if username == "" {
 		return errors.New("username cannot be empty")
 	}
-	w.usernames = append(w.usernames, username)
+	w.Usernames = append(w.Usernames, username)
 	return nil
+}
+
+// RemoveUser - remove an user from list of users
+func (w *Watcher) RemoveUser(username string) bool {
+	for i, u := range w.Usernames {
+		if u == username {
+			w.Usernames = append(w.Usernames[:i], w.Usernames[i+1:]...)
+			return true
+		}
+	}
+	return false
 }
 
 // UpdateUsers - update user state.
 func (w *Watcher) UpdateUsers() error {
-	for _, username := range w.usernames {
+	for _, username := range w.Usernames {
 		user, err := w.client.GetUser(username)
 		if err != nil {
 			return err
 		}
 		userstate := UserState{time.Now(), *user}
-		err = w.datastore.Save(userstate)
+		err = w.Datastore.Save(userstate)
 		if err != nil {
 			return err
 		}
