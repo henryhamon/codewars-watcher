@@ -45,13 +45,10 @@ func main() {
 	dtstore := GetDataStore(session)
 	timer := time.NewTicker(time.Duration(config.Ticker) * time.Hour)
 
-	usernames := []string{"leometzger", "henryhamon", "ALNeneve"}
-
 	watcher = Watcher{
 		Datastore: dtstore,
 		client:    CodewarsAPI{},
 		Time:      timer,
-		Usernames: usernames,
 	}
 	stop := make(chan bool)
 	go watcher.Run(stop)
