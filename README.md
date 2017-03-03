@@ -8,6 +8,9 @@ The idea is monitor your friends in codewars to know how they doing. Make a hist
 * GO [install](https://golang.org/doc/install)
 * MongoDB [install](https://docs.mongodb.com/manual/administration/install-community/)
 
+
 ## Todo
-* Finish file store, to make optional mongodb
-* make and treat a config file
+* Finish file store, to make optional mongodb;
+* Put into a package structure;
+* Check http method better.
+* Refactor api.go 

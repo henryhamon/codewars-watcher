@@ -6,8 +6,6 @@ import (
 	"net/http"
 )
 
-const serviceName string = "https://www.codewars.com/api/v1/users/"
-
 // CodewarsAPI server and services provided by codewars api
 type CodewarsAPI struct {
 	server   string
@@ -27,7 +25,7 @@ func NewCodewarsAPI() *CodewarsAPI {
 // GetUser - retriece a user from codewars
 func (c *CodewarsAPI) GetUser(username string) (*User, error) {
 	var user User
-	resp, err := http.Get(serviceName + username)
+	resp, err := http.Get(c.server + c.services["getuser"])
 	if err != nil {
 		return &user, errors.New("error getting a user")
 	}
@@ -103,4 +101,11 @@ type Languages struct {
 	SQL         Language `json:"sql, omitempty"`
 	Swift       Language `json:"swift, omitempty"`
 	Typescript  Language `json:"typescript, omitempty"`
+}
+
+// UserWebhook used on webhook for honor_change and rank_upgraded
+type UserWebhook struct {
+	Action   string   `json:"action"`
+	User     User     `json:"user"`
+	Language Language `json:"language"`
 }

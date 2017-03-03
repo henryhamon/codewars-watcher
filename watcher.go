@@ -51,18 +51,54 @@ func (w *Watcher) RemoveUser(username string) bool {
 	return false
 }
 
+// UpdateUser updates an specific user state
+func (w *Watcher) UpdateUser(usernameOrID string) error {
+	user, err := w.client.GetUser(usernameOrID)
+	if err != nil {
+		return err
+	}
+	userstate := UserState{time.Now(), *user}
+	changed, err := w.UserChanged(*user)
+	if err != nil {
+		return err
+	}
+	if !changed {
+		return nil
+	}
+	err = w.Datastore.Save(userstate)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // UpdateUsers - update user state.
 func (w *Watcher) UpdateUsers() error {
 	for _, username := range w.Usernames {
-		user, err := w.client.GetUser(username)
-		if err != nil {
-			return err
-		}
-		userstate := UserState{time.Now(), *user}
-		err = w.Datastore.Save(userstate)
+		err := w.UpdateUser(username)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// UserChanged was made for check if an user change since last time your state
+// was saved
+func (w *Watcher) UserChanged(user User) (bool, error) {
+	users, err := w.Datastore.RegistersByLimit(user.Username, 1)
+	if err != nil {
+		return true, errors.New("error searching user")
+	}
+	if len(users) < 1 {
+		return true, nil
+	}
+	honor, leaderboard := CompareUsers(users[0].User, user)
+	return !(honor == 0 && leaderboard == 0), nil
+}
+
+// CompareUsers returns a difference of honor and leaderboard between them
+// based on scores of user 1
+func CompareUsers(u1, u2 User) (honor, leaderboard int) {
+	return u1.Honor - u2.Honor, u1.LeaderboardPosition - u2.LeaderboardPosition
 }

@@ -36,7 +36,9 @@ func addUser(w http.ResponseWriter, r *http.Request) {
 	user := make(map[string]string)
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		w.WriteHeader(422)
+		return
 	}
 	if err = json.Unmarshal(body, &user); err != nil {
 		w.WriteHeader(422)
@@ -84,6 +86,27 @@ func removeUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
+func updateUser(w http.ResponseWriter, r *http.Request) {
+	var userwh UserWebhook
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		w.WriteHeader(422)
+		log.Println(err)
+		return
+	}
+	if err = json.Unmarshal(body, &userwh); err != nil {
+		w.WriteHeader(422)
+		log.Println(err)
+		return
+	}
+	_ = watcher.UpdateUser(userwh.User.Username)
+	w.WriteHeader(http.StatusOK)
+}
+
 // last retrieves last n registers from all users
 func last(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -120,11 +143,16 @@ func users(w http.ResponseWriter, r *http.Request) {
 // RunAPI run api listener
 func RunAPI(watcher Watcher) error {
 	router := mux.NewRouter().StrictSlash(true)
+
+	// GET
 	router.HandleFunc("/", index)
 	router.HandleFunc("/update", updateState)
 	router.HandleFunc("/users", users)
 	router.HandleFunc("/last/{limit:[0-9]+}", last)
 
+	// POST
 	router.HandleFunc("/add", addUser)
+	router.HandleFunc("/update/user", updateUser)
+
 	return http.ListenAndServe(":9090", router)
 }
