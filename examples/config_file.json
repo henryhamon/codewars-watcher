@@ -1,0 +1,6 @@
+{
+  "datastore":"Mongo",
+  "url":"",
+  "ticker":15,
+  "api":true
+}

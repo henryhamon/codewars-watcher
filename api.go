@@ -12,19 +12,19 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// Index function is to test if api is working well
 func index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Fprint(w, "Welcome to codewars monitor api.")
 }
 
-// updateState - update state of all users
+// updateState update state of all users
 func updateState(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	go watcher.UpdateUsers()
 	w.WriteHeader(http.StatusOK)
 }
 
-// addUser - add a user to be monitored
-func addUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
+// addUser add a user to be monitored
+func add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	user := make(map[string]string)
@@ -116,10 +116,6 @@ func last(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func users(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if r.Method != "GET" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 	if err := json.NewEncoder(w).Encode(watcher.Usernames); err != nil {
 		log.Println(err)
 		return
@@ -134,9 +130,9 @@ func RunAPI(watcher Watcher) error {
 	router.GET("/api/v1/", index)
 	router.GET("/api/v1/update", updateState)
 	router.GET("/api/v1/users", users)
-	router.GET("/api/v1/last/{limit:[0-9]+}", last)
+	router.GET("/api/v1/last/:limit", last)
 
-	router.POST("/api/v1/add", addUser)
+	router.POST("/api/v1/add", add)
 	router.POST("/api/v1/update/user", updateUser)
 
 	return http.ListenAndServe(":9090", router)

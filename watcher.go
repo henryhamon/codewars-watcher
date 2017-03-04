@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -51,12 +52,20 @@ func (w *Watcher) RemoveUser(username string) bool {
 	return false
 }
 
-// UpdateUser updates an specific user state
+// UpdateUser updates the state of an specific user.
+// the state just gonna be save into database if the user state
+// change since last time.
+//
+// if process of get an user fail(server out), the function return an error and
+// schedule an update.
 func (w *Watcher) UpdateUser(usernameOrID string) error {
 	user, err := w.client.GetUser(usernameOrID)
 	if err != nil {
+		log.Println("error getting a user from codewars", err)
+		w.failUpdate(usernameOrID)
 		return err
 	}
+
 	userstate := UserState{time.Now(), *user}
 	changed, err := w.UserChanged(*user)
 	if err != nil {
@@ -72,7 +81,15 @@ func (w *Watcher) UpdateUser(usernameOrID string) error {
 	return nil
 }
 
-// UpdateUsers - update user state.
+// failUpdate send again the request when fail
+// user update
+func (w *Watcher) failUpdate(usernameOrID string) {
+	timeout := time.After(10 * time.Minute)
+	<-timeout
+	w.UpdateUser(usernameOrID)
+}
+
+// UpdateUsers update state of all watched users
 func (w *Watcher) UpdateUsers() error {
 	for _, username := range w.Usernames {
 		err := w.UpdateUser(username)

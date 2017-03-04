@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
@@ -27,12 +26,12 @@ func (c *CodewarsAPI) GetUser(username string) (*User, error) {
 	var user User
 	resp, err := http.Get(c.server + c.services["getuser"])
 	if err != nil {
-		return &user, errors.New("error getting a user")
+		return &user, NewHTTPError(err, resp.StatusCode)
 	}
 	defer resp.Body.Close()
 
 	if err = json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		return &user, errors.New("error decoding a user ")
+		return &user, NewDecodingError(err, "User")
 	}
 	return &user, err
 }

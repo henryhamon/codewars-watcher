@@ -26,6 +26,8 @@ var userstates = [][]UserState{
 	},
 }
 
+// mock implementation of Datastore,
+// just returs fixed users
 type mockDatastore struct {
 	userstates [][]UserState
 }
@@ -43,19 +45,16 @@ func (ds *mockDatastore) RegistersByLimit(username string, limit int) ([]UserSta
 }
 
 func TestAddUser(t *testing.T) {
-	w := watcher
 	for _, u := range usernames {
-		w.AddUser(u)
+		watcher.AddUser(u)
 	}
 
-	assert.Equal(t, len(usernames), len(w.Usernames), "length users should be equal")
+	assert.Equal(t, len(usernames), len(watcher.Usernames), "length users should be equal")
 
-	for i, u := range w.Usernames {
+	for i, u := range watcher.Usernames {
 		assert.Equal(t, usernames[i], u, "names should be equal")
 	}
-}
 
-func TestAddUserError(t *testing.T) {
 	err := watcher.AddUser("")
 	assert.NotNil(t, err, "error should not be nil when empty string is sended")
 }

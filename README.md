@@ -11,6 +11,4 @@ The idea is monitor your friends in codewars to know how they doing. Make a hist
 
 ## Todo
 * Finish file store, to make optional mongodb;
-* Put into a package structure;
-* Check http method better.
-* Refactor api.go 
+* Better names to the watcher method
