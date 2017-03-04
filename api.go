@@ -9,30 +9,24 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Fprint(w, "Welcome to codewars monitor api.")
 }
 
 // updateState - update state of all users
-func updateState(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+func updateState(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	go watcher.UpdateUsers()
 	w.WriteHeader(http.StatusOK)
 }
 
 // addUser - add a user to be monitored
-func addUser(w http.ResponseWriter, r *http.Request) {
+func addUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+
 	user := make(map[string]string)
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -56,12 +50,9 @@ func addUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // removeUser - removes an user from watching user list
-func removeUser(w http.ResponseWriter, r *http.Request) {
+func removeUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+
 	user := make(map[string]string)
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -86,12 +77,9 @@ func removeUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func updateUser(w http.ResponseWriter, r *http.Request) {
+func updateUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var userwh UserWebhook
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		w.WriteHeader(422)
@@ -108,11 +96,10 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // last retrieves last n registers from all users
-func last(w http.ResponseWriter, r *http.Request) {
+func last(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var err error
 	results := make([][]UserState, len(watcher.Usernames))
-	vars := mux.Vars(r)
-	n, _ := strconv.Atoi(vars["limit"])
+	n, _ := strconv.Atoi(ps.ByName("limit"))
 
 	for i, u := range watcher.Usernames {
 		results[i], err = watcher.Datastore.RegistersByLimit(u, n)
@@ -127,7 +114,7 @@ func last(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func users(w http.ResponseWriter, r *http.Request) {
+func users(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -142,17 +129,15 @@ func users(w http.ResponseWriter, r *http.Request) {
 
 // RunAPI run api listener
 func RunAPI(watcher Watcher) error {
-	router := mux.NewRouter().StrictSlash(true)
+	router := httprouter.New()
 
-	// GET
-	router.HandleFunc("/", index)
-	router.HandleFunc("/update", updateState)
-	router.HandleFunc("/users", users)
-	router.HandleFunc("/last/{limit:[0-9]+}", last)
+	router.GET("/api/v1/", index)
+	router.GET("/api/v1/update", updateState)
+	router.GET("/api/v1/users", users)
+	router.GET("/api/v1/last/{limit:[0-9]+}", last)
 
-	// POST
-	router.HandleFunc("/add", addUser)
-	router.HandleFunc("/update/user", updateUser)
+	router.POST("/api/v1/add", addUser)
+	router.POST("/api/v1/update/user", updateUser)
 
 	return http.ListenAndServe(":9090", router)
 }

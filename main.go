@@ -27,7 +27,8 @@ func init() {
 	}
 
 	data, err := ioutil.ReadFile(configfile)
-	fmt.Println(string(data))
+	fmt.Println("Configurations: --")
+	fmt.Println(string(data) + "\n")
 	if err != nil {
 		return
 	}
