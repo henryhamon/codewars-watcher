@@ -42,7 +42,6 @@ func add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if err = watcher.AddUser(user["username"]); err != nil {
 		log.Fatal(err)
 	}
-	w.WriteHeader(http.StatusOK)
 	if err = json.NewEncoder(w).Encode(watcher.Usernames); err != nil {
 		log.Println(err)
 		return
@@ -135,5 +134,5 @@ func RunAPI(watcher Watcher) error {
 	router.POST("/api/v1/add", add)
 	router.POST("/api/v1/update/user", updateUser)
 
-	return http.ListenAndServe(":9090", router)
+	return http.ListenAndServe(":8080", router)
 }

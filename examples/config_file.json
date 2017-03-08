@@ -1,6 +1,6 @@
 {
   "datastore":"Mongo",
-  "url":"",
+  "databaseurl":"db:27017",
   "ticker":15,
   "api":true
 }

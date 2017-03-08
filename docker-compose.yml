@@ -1,0 +1,10 @@
+db:
+  image: mongo
+web:
+  build: .
+  command: ./codewars-watcher
+  container_name: codewars-watcher
+  ports:
+    - 8080:8080
+  links:
+    - db
