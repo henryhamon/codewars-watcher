@@ -83,10 +83,10 @@ type Languages struct {
 	Coffescript Language `json:"coffescript, omitempty"`
 	Cplusplus   Language `json:"c++, omitempty"`
 	Crystal     Language `json:"crystal, omitempty"`
-	CSharp      Language `json:"c#, omitempty"`
+	CSharp      Language `json:"csharp, omitempty"`
 	Dart        Language `json:"dart, omitempty"`
 	Elixit      Language `json:"elixir, omitempty"`
-	FSharp      Language `json:"f#, omitempty"`
+	FSharp      Language `json:"fsharp, omitempty"`
 	Haskell     Language `json:"haskell, omitempty"`
 	Java        Language `json:"java, omitempty"`
 	Javascript  Language `json:"javascript, omitempty"`
